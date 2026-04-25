@@ -8,10 +8,13 @@ By uploading a photo or PDF of a prescription, RxRadar processes the document en
 
 ## ✨ Key Features
 
-- **Privacy-First Local OCR**: Process images and PDFs locally using Tesseract.js and pdf-parse. No medical data leaves your machine.
+- **Privacy-First Local OCR**: Process images and PDFs locally using Tesseract.js and pdf-parse. No medical data leaves your machine. The system perfectly handles PDF extraction logic without hallucinating data.
 - **Smart Buy Decision Engine**: AI-ranked recommendations based on price variance, generic availability, and therapeutic equivalence (matching exact salt compositions).
+- **Interactive Intelligence Dashboard**: A fully responsive, multi-column CSS grid dashboard that provides deep insights.
+- **Interactive SVG Projections**: The *Cumulative Spend* graph dynamically displays specific monthly standard costs, optimized costs, and total cumulative savings when hovered.
 - **Market Price History**: Interactive 12-month trend charts allowing users to track drug pricing fluctuations across various pharmacies.
-- **Actionable Savings Reports**: Detailed financial breakdown projecting monthly and annual savings, including one-click "Pharmacist Scripts" to safely request generic substitutions.
+- **Actionable Savings Reports & PDF Exports**: Detailed financial breakdowns projecting monthly and annual savings, including one-click "Pharmacist Scripts". Includes a flawless PDF export utilizing custom `@media print` CSS for a clean, professional medical printout.
+- **"How It Works" Flow**: A beautiful, interactive, framer-motion powered step-by-step modal on the landing page explaining the entire OCR & Savings workflow.
 - **Intelligent Noise Filtering**: Automatically discards OCR artifacts (doctor names, clinic addresses) and only outputs verified medicines matched against the database.
 
 ---
@@ -19,17 +22,19 @@ By uploading a photo or PDF of a prescription, RxRadar processes the document en
 ## 🛠️ Technology Stack
 
 **Frontend:**
-- React 18, TypeScript, Vite
-- Tailwind CSS (Premium Styling & UI)
-- Motion / Framer Motion (Animations)
-- React Router DOM
-- Lucide React (Icons)
+- **React 19** & **Vite**: Ultra-fast, modern UI framework and bundler.
+- **TypeScript (TSX)**: Strict type-safety across the application.
+- **Tailwind CSS v4**: Utility-first CSS using the new `@import` standard.
+- **Framer Motion (`motion/react`)**: Powering all micro-animations and smooth page transitions.
+- **React Router DOM**: Client-side routing.
+- **Lucide React**: Clean and consistent SVG iconography.
 
 **Backend:**
-- Node.js, Express.js
-- Tesseract.js (Optical Character Recognition)
-- pdf-parse (PDF Text Extraction)
-- Multer (File Handling)
+- **Node.js** & **Express.js**: Lightweight server routing API requests.
+- **Tesseract.js**: Local OCR engine for privacy-focused image reading (no external APIs).
+- **pdf-parse**: Extracts raw text efficiently from uploaded PDFs locally.
+- **Multer**: Secure, memory-based multipart file handling.
+- **Local JSON Database**: Extremely fast file-based database (`medicines.json`) containing pharmacies, generic equivalents, and real-time market prices.
 
 ---
 
