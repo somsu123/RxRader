@@ -375,10 +375,10 @@ export default function MonthlyCostAnalyzer({ results }: MonthlyCostAnalyzerProp
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-6">
 
         {/* ── 4 Summary Tiles ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Tile
             label="Monthly Burden"
             value={formatCurrency(agg.currentMonthly)}
@@ -412,8 +412,45 @@ export default function MonthlyCostAnalyzer({ results }: MonthlyCostAnalyzerProp
           />
         </div>
 
-        {/* ── Current vs Optimised bar comparison ─────────────────────────── */}
-        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* ── LEFT COLUMN: Graph & Milestones ── */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            {/* ── Cumulative spend SVG chart ───────────────────────────────────── */}
+            <div className="rounded-xl border border-slate-100 p-5 bg-slate-50/50">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                Cumulative Spend Over {duration} Months
+              </p>
+              <SavingsProjectionChart
+                currentMonthly={agg.currentMonthly}
+                optimizedMonthly={agg.optimizedMonthly}
+                months={duration}
+              />
+            </div>
+
+            {/* ── Milestone projections ────────────────────────────────────────── */}
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-5">
+              <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">
+                Long-term Saving Milestones
+              </p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[3, 6, 12, 24].map(m => (
+                  <div key={m} className={`rounded-xl p-3 bg-white border ${duration === m ? 'border-indigo-300 shadow-sm' : 'border-slate-100'}`}>
+                    <p className="text-[9px] font-black text-slate-400 uppercase">{m} months</p>
+                    <p className="text-sm font-black text-indigo-700 mt-1">{formatCurrency(agg.savingMonthly * m)}</p>
+                    <p className="text-[9px] text-slate-400 font-medium">total saved</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* ── RIGHT COLUMN: Bars & Breakdown ── */}
+          <div className="lg:col-span-5 space-y-6">
+            
+            {/* ── Current vs Optimised bar comparison ─────────────────────────── */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-5">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
             Spend Comparison — {duration} months
           </p>
@@ -467,76 +504,51 @@ export default function MonthlyCostAnalyzer({ results }: MonthlyCostAnalyzerProp
               </span>
             </div>
           </div>
-        </div>
+            </div>
 
-        {/* ── Cumulative spend SVG chart ───────────────────────────────────── */}
-        <div className="rounded-xl border border-slate-100 p-4">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-            Cumulative Spend Over {duration} Months
-          </p>
-          <SavingsProjectionChart
-            currentMonthly={agg.currentMonthly}
-            optimizedMonthly={agg.optimizedMonthly}
-            months={duration}
-          />
-        </div>
+            {/* ── Chronic analysis alert ───────────────────────────────────────── */}
+            {agg.chronicCount > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-black text-amber-800">
+                      Chronic Condition Detected
+                    </p>
+                    <p className="text-[10px] text-amber-700 mt-1 leading-relaxed">
+                      {agg.chronicCount} medicine{agg.chronicCount > 1 ? 's are' : ' is'} for chronic conditions.
+                      At current pricing, your <strong>5-year burden</strong> would be{' '}
+                      <strong>{formatCurrency(agg.currentMonthly * 60)}</strong>.
+                      Optimising now saves <strong>{formatCurrency(agg.savingMonthly * 60)}</strong> over 5 years.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-        {/* ── Chronic analysis alert ───────────────────────────────────────── */}
-        {agg.chronicCount > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"
-          >
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            {/* ── Per-medicine breakdown ───────────────────────────────────────── */}
+            <div className="rounded-xl border border-slate-100 p-5">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                Per-Medicine Breakdown — {duration} months
+              </p>
+              <p className="text-[9px] text-slate-400 mb-3">Bars show relative monthly burden</p>
               <div>
-                <p className="text-xs font-black text-amber-800">
-                  Chronic Condition Detected — Long-term Cost Impact
-                </p>
-                <p className="text-[10px] text-amber-700 mt-1 leading-relaxed">
-                  {agg.chronicCount} medicine{agg.chronicCount > 1 ? 's are' : ' is'} for chronic conditions.
-                  At current pricing, your <strong>5-year burden</strong> would be{' '}
-                  <strong>{formatCurrency(agg.currentMonthly * 60)}</strong>.
-                  Optimising now saves <strong>{formatCurrency(agg.savingMonthly * 60)}</strong> over 5 years.
-                </p>
+                {results.map(r => (
+                  <React.Fragment key={r.medicine.id}>
+                    <MedCostRow
+                      result={r}
+                      months={duration}
+                      maxMonthly={maxMonthly}
+                    />
+                  </React.Fragment>
+                ))}
               </div>
             </div>
-          </motion.div>
-        )}
 
-        {/* ── Per-medicine breakdown ───────────────────────────────────────── */}
-        <div className="rounded-xl border border-slate-100 p-4">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-            Per-Medicine Breakdown — {duration} months
-          </p>
-          <p className="text-[9px] text-slate-400 mb-3">Bars show relative monthly burden</p>
-          <div>
-            {results.map(r => (
-              <React.Fragment key={r.medicine.id}>
-                <MedCostRow
-                  result={r}
-                  months={duration}
-                  maxMonthly={maxMonthly}
-                />
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Milestone projections ────────────────────────────────────────── */}
-        <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
-          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">
-            Long-term Saving Milestones
-          </p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[3, 6, 12, 24].map(m => (
-              <div key={m} className={`rounded-xl p-3 bg-white border ${duration === m ? 'border-indigo-300 shadow-sm' : 'border-slate-100'}`}>
-                <p className="text-[9px] font-black text-slate-400 uppercase">{m} months</p>
-                <p className="text-sm font-black text-indigo-700 mt-1">{formatCurrency(agg.savingMonthly * m)}</p>
-                <p className="text-[9px] text-slate-400 font-medium">total saved</p>
-              </div>
-            ))}
           </div>
         </div>
 

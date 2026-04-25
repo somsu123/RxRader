@@ -85,9 +85,13 @@ export default function AnalyzePage() {
                   <p className="text-slate-400 text-sm mt-2">Try brand names like "Lipitor", "Augmentin", or "Crocin".</p>
                 </motion.div>
               ) : results && (
-                <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-12 gap-6 items-start">
-                  {/* ── Left Sidebar: Decision & Input ── */}
-                  <div className="col-span-12 lg:col-span-4 space-y-6 sticky top-6">
+                <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+                  {/* ── Top Full-Width: Monthly Cost Analyzer ── */}
+                  <MonthlyCostAnalyzer results={results} />
+                  
+                  <div className="grid grid-cols-12 gap-6 items-start">
+                    {/* ── Left Sidebar: Decision & Input ── */}
+                    <div className="col-span-12 lg:col-span-4 space-y-6 sticky top-6">
                     <SmartBuyDecision results={results} />
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 px-1">New Scan</p>
@@ -106,9 +110,7 @@ export default function AnalyzePage() {
                       </span>
                     </div>
 
-                    {/* ── Monthly Cost Analyzer ── */}
-                    <MonthlyCostAnalyzer results={results} />
-
+                    {/* ── Monthly Cost Analyzer Moved to Top ── */}
                     {results.map((res, i) => (
                       <div key={res.medicine.id}>
                         <PriceIntelligenceCard result={res} index={i} />
@@ -119,6 +121,7 @@ export default function AnalyzePage() {
                   {/* ── Right: Market & Insights ── */}
                   <div className="col-span-12 lg:col-span-4 space-y-6">
                     <GenericInsightsCard results={results} />
+                    </div>
                   </div>
                 </motion.div>
               )}
