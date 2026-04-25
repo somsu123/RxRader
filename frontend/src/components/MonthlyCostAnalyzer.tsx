@@ -31,6 +31,7 @@ function SavingsProjectionChart({
   optimizedMonthly: number;
   months: number;
 }) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const W = 560, H = 160, PAD = { top: 12, right: 16, bottom: 28, left: 48 };
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
@@ -59,7 +60,10 @@ function SavingsProjectionChart({
   const xTicks = points.filter(p => p.month % step === 0);
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div 
+      className="relative w-full select-none"
+      onMouseLeave={() => setHoverIndex(null)}
+    >
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: 300 }}>
         {/* Grid lines */}
         {[0, 0.25, 0.5, 0.75, 1].map(frac => {
@@ -111,6 +115,38 @@ function SavingsProjectionChart({
           ₹ Spend
         </text>
 
+        {/* Interactive Hover Zones */}
+        {points.map((p, i) => {
+          const xStart = i === 0 ? PAD.left : xScale(i - 0.5);
+          const xEnd   = i === months ? W - PAD.right : xScale(i + 0.5);
+          return (
+            <rect
+              key={`hover-${i}`}
+              x={xStart}
+              y={PAD.top}
+              width={Math.max(0, xEnd - xStart)}
+              height={innerH}
+              fill="transparent"
+              onMouseEnter={() => setHoverIndex(i)}
+              onTouchStart={() => setHoverIndex(i)}
+              className="cursor-crosshair outline-none"
+            />
+          );
+        })}
+
+        {/* Active Hover State (Vertical line & dots) */}
+        {hoverIndex !== null && (
+          <g className="pointer-events-none">
+            <line
+              x1={xScale(hoverIndex)} x2={xScale(hoverIndex)}
+              y1={PAD.top} y2={PAD.top + innerH}
+              stroke="#94a3b8" strokeDasharray="4 4" strokeWidth="1"
+            />
+            <circle cx={xScale(hoverIndex)} cy={yScale(points[hoverIndex].optimized)} r="4.5" fill="#10b981" stroke="#fff" strokeWidth="2" />
+            <circle cx={xScale(hoverIndex)} cy={yScale(points[hoverIndex].current)} r="4.5" fill="#f97316" stroke="#fff" strokeWidth="2" />
+          </g>
+        )}
+
         {/* Gradient defs */}
         <defs>
           <linearGradient id="currentGrad" x1="0" y1="0" x2="0" y2="1">
@@ -124,8 +160,51 @@ function SavingsProjectionChart({
         </defs>
       </svg>
 
+      {/* HTML Tooltip */}
+      <AnimatePresence>
+        {hoverIndex !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="absolute pointer-events-none bg-slate-900 text-white rounded-xl shadow-2xl border border-slate-700/50 p-3 z-20 min-w-[160px]"
+            style={{
+              left: xScale(hoverIndex) > W / 2 ? 'auto' : `calc(${(xScale(hoverIndex) / W) * 100}% + 12px)`,
+              right: xScale(hoverIndex) > W / 2 ? `calc(${100 - (xScale(hoverIndex) / W) * 100}% + 12px)` : 'auto',
+              top: '15%'
+            }}
+          >
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-700 pb-1.5">
+              Month {hoverIndex}
+            </p>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  <span className="text-slate-300">Standard</span>
+                </div>
+                <span className="font-bold text-orange-400">{formatCurrency(points[hoverIndex].current)}</span>
+              </div>
+              <div className="flex justify-between items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-slate-300">Optimised</span>
+                </div>
+                <span className="font-bold text-emerald-400">{formatCurrency(points[hoverIndex].optimized)}</span>
+              </div>
+              {points[hoverIndex].saving > 0 && (
+                <div className="mt-2 pt-2 border-t border-slate-700 flex justify-between items-center gap-4">
+                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-wider">You Save</span>
+                  <span className="font-black text-emerald-400">{formatCurrency(points[hoverIndex].saving)}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Legend */}
-      <div className="flex items-center gap-5 justify-center mt-1">
+      <div className="flex items-center gap-5 justify-center mt-2">
         <div className="flex items-center gap-1.5">
           <span className="w-6 h-0.5 bg-orange-500 inline-block rounded" />
           <span className="text-[10px] text-slate-500 font-medium">Current spend</span>
