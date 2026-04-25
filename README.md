@@ -4,6 +4,10 @@
 
 https://drive.google.com/drive/folders/14_3BFC-IK-ZcFardHY-qvvTCNHb7vLyi
 
+**Video Link for the walkthrough of our website is on this LIVE LINK**
+
+https://drive.google.com/file/d/1hnQE_j9Fn_t_Dxjtkcdp5mUOE0ThAuxo/view?usp=drive_link
+
 **RxRadar** is an intelligent, privacy-first prescription analytics platform designed to solve healthcare affordability and lack of price transparency. It transforms static prescriptions into actionable, data-driven purchasing decisions.
 
 By uploading a photo or PDF of a prescription, RxRadar processes the document entirely offline using local OCR to ensure maximum medical data privacy. It aggressively filters out document noise, maps the prescribed medications against a comprehensive market database, and empowers patients to navigate the fragmented pharmaceutical market to secure the best possible prices.
