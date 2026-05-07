@@ -1,0 +1,5 @@
+node_modules/
+rxradar.db
+rxradar.db-*
+.env*
+!.env.example

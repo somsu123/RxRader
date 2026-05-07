@@ -226,3 +226,13 @@ export async function getNearestPharmacies(
   if (!res.ok) throw new Error('Geolocation query failed');
   return res.json();
 }
+
+export async function resolveWhat3Words(words: string): Promise<{ lat: number; lng: number; words: string }> {
+  const res = await fetch(`${API_BASE}/what3words`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ words })
+  });
+  if (!res.ok) throw new Error('what3words lookup failed');
+  return res.json();
+}
