@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Activity, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
+import { Activity, TrendingDown, TrendingUp, Calendar, User } from 'lucide-react';
 import { medicines } from '../lib/mockData';
 
 export default function Navbar() {
@@ -41,7 +41,10 @@ export default function Navbar() {
         <div className="hidden sm:flex items-center space-x-2 bg-emerald-50 px-3 py-1 rounded-full">
           <span className="text-[10px] font-bold text-emerald-700 tracking-wider">SAVING 64% TODAY</span>
         </div>
-        <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300"></div>
+        <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300 flex items-center justify-center">
+        <User className="w-4 h-4 text-slate-500" />
+        </div>
+        {/* <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300"></div> */}
       </div>
     </nav>
   );
