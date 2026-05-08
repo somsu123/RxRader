@@ -4,7 +4,7 @@ import {
   MapPin, Navigation, CheckCircle2, AlertCircle, Clock,
   TrendingDown, Zap, RefreshCw, ChevronUp, ChevronDown, Star
 } from 'lucide-react';
-import { AnalysisResult, PharmacyLocation, getNearestPharmacies } from '../lib/api';
+import { AnalysisResult, PharmacyLocation, getNearestPharmacies, resolveWhat3Words } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
 
 interface PharmacyDashboardProps {
@@ -30,6 +30,12 @@ const PHARMACY_BG: Record<string, string> = {
   'Jan Aushadhi':    'bg-purple-50 border-purple-200',
 };
 
+const W3W_PATTERN = /^(?:[a-z0-9]+\.){2}[a-z0-9]+$/i;
+
+function isWhat3WordsAddress(value: string) {
+  return W3W_PATTERN.test(value.trim());
+}
+
 function GeoStatusPill({ status }: { status: string }) {
   const colors: Record<string, string> = {
     idle:    'bg-slate-100 text-slate-500',
@@ -46,11 +52,22 @@ function GeoStatusPill({ status }: { status: string }) {
 
 export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
   const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [locationSource, setLocationSource] = useState<'geo' | 'w3w' | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [liveDistances, setLiveDistances] = useState<Record<string, number>>({});
+  const [showW3w, setShowW3w] = useState(false);
+  const [w3wInput, setW3wInput] = useState('');
+  const [w3wStatus, setW3wStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [w3wError, setW3wError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('price');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [selectedMed, setSelectedMed] = useState<string>('all');
+
+  const applyDistances = (data: { pharmacies: PharmacyLocation[] }) => {
+    const distMap: Record<string, number> = {};
+    data.pharmacies.forEach(p => { distMap[p.name] = p.distanceKm; });
+    setLiveDistances(distMap);
+  };
 
   // ── Geolocation ─────────────────────────────────────────────────────────────
   const detectLocation = useCallback(() => {
@@ -65,9 +82,8 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
         setUserLocation({ lat, lng });
         try {
           const data = await getNearestPharmacies(lat, lng);
-          const distMap: Record<string, number> = {};
-          data.pharmacies.forEach(p => { distMap[p.name] = p.distanceKm; });
-          setLiveDistances(distMap);
+          applyDistances(data);
+          setLocationSource('geo');
           setGeoStatus('success');
         } catch {
           setGeoStatus('error');
@@ -77,6 +93,29 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
       { timeout: 8000, maximumAge: 60000 }
     );
   }, []);
+
+  const handleWhat3Words = async () => {
+    const trimmed = w3wInput.trim().toLowerCase();
+    if (!isWhat3WordsAddress(trimmed)) {
+      setW3wError('Enter a valid what3words address (three words separated by dots).');
+      setW3wStatus('error');
+      return;
+    }
+    setW3wStatus('loading');
+    setW3wError(null);
+    try {
+      const coords = await resolveWhat3Words(trimmed);
+      setUserLocation({ lat: coords.lat, lng: coords.lng });
+      const data = await getNearestPharmacies(coords.lat, coords.lng);
+      applyDistances(data);
+      setLocationSource('w3w');
+      setGeoStatus('success');
+      setW3wStatus('success');
+    } catch {
+      setW3wStatus('error');
+      setW3wError('Could not resolve that what3words address.');
+    }
+  };
 
   // ── Build unified pharmacy rows ──────────────────────────────────────────────
   // Aggregate: for each pharmacy, collect prices across all selected medicines
@@ -171,8 +210,43 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
               }
               {geoStatus === 'loading' ? 'Detecting...' : 'Detect My Location'}
             </button>
+            <button
+              onClick={() => setShowW3w(s => !s)}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wide transition-all"
+            >
+              what3words
+            </button>
           </div>
         </div>
+
+        {showW3w && (
+          <div className="mt-4 bg-white/10 border border-white/10 rounded-xl p-3">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+              <input
+                value={w3wInput}
+                onChange={e => { setW3wInput(e.target.value); setW3wStatus('idle'); setW3wError(null); }}
+                onKeyDown={e => { if (e.key === 'Enter') handleWhat3Words(); }}
+                placeholder="e.g. filled.count.soap"
+                className="flex-1 bg-white/90 text-slate-800 placeholder:text-slate-400 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              <button
+                onClick={handleWhat3Words}
+                disabled={!isWhat3WordsAddress(w3wInput) || w3wStatus === 'loading'}
+                className="bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all"
+              >
+                {w3wStatus === 'loading' ? 'Resolving...' : 'Use what3words'}
+              </button>
+            </div>
+            {w3wError && (
+              <p className="text-[10px] text-red-200 mt-2 font-semibold">{w3wError}</p>
+            )}
+            {!w3wError && (
+              <p className="text-[10px] text-blue-100/80 mt-2 font-semibold">
+                Enter three words separated by dots to locate your area.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Medicine filter tabs */}
         {results.length > 1 && (
@@ -208,7 +282,7 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <p className="text-[11px] text-emerald-700 font-semibold">
-              Live distances calculated from your location ({userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}) — pharmacies sorted by actual proximity.
+              Live distances calculated from your {locationSource === 'w3w' ? 'what3words location' : 'location'} ({userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}) — pharmacies sorted by actual proximity.
             </p>
           </motion.div>
         )}
@@ -374,7 +448,9 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
         <div className="flex items-center gap-2">
           <Zap className="w-3.5 h-3.5 text-amber-500" />
           <p className="text-[10px] text-slate-500 font-medium">
-            Click column headers to sort · {geoStatus === 'success' ? 'Distances are live from your location' : 'Enable location for real distances'}
+            Click column headers to sort · {geoStatus === 'success'
+              ? (locationSource === 'w3w' ? 'Distances are live from your what3words location' : 'Distances are live from your location')
+              : 'Enable location for real distances'}
           </p>
         </div>
         <div className="flex items-center gap-3">

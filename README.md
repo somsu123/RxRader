@@ -42,7 +42,7 @@ By uploading a photo or PDF of a prescription, RxRadar processes the document en
 - **Tesseract.js**: Local OCR engine for privacy-focused image reading (no external APIs).
 - **pdf-parse**: Extracts raw text efficiently from uploaded PDFs locally.
 - **Multer**: Secure, memory-based multipart file handling.
-- **Local JSON Database**: Extremely fast file-based database (`medicines.json`) containing pharmacies, generic equivalents, and real-time market prices.
+- **SQLite (better-sqlite3)**: Local database (`rxradar.db`) seeded from `medicines.json` containing pharmacies, generic equivalents, and market prices.
 
 ---
 
@@ -64,7 +64,7 @@ graph TD
     F --> G
     
     G --> H[Noise Filter & DB Matching]
-    H -->|Discards Non-Medical Text| I[(Mock Medicine Database)]
+    H -->|Discards Non-Medical Text| I[(SQLite Medicine Database)]
     
     I -->|Returns Verified Matches| J[Intelligence Dashboard]
     
@@ -92,6 +92,7 @@ Open a terminal and run the following:
 ```bash
 cd backend
 npm install
+npm run db:init
 npm run dev
 ```
 *The backend will start running on `http://localhost:5000`.*
@@ -103,7 +104,7 @@ cd frontend
 npm install
 npm run dev
 ```
-*The frontend will start running on `http://localhost:5173`.*
+*The frontend will start running on `http://localhost:3000`.*
 
 ---
 

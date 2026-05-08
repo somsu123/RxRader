@@ -6,40 +6,94 @@ import { medicines } from '../lib/mockData';
 export default function Navbar() {
   const location = useLocation();
   const path = location.pathname;
-  
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const isActive = (to: string, exact: boolean) =>
+    exact ? path === to : path.startsWith(to);
+
   return (
-    <nav className="h-14 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-50">
-      <div className="flex items-center space-x-8">
-        <Link to="/" className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">Rx</div>
-          <span className="text-xl font-bold tracking-tight text-slate-800">
-            RxRadar
-          </span>
-        </Link>
-        
-        <div className="hidden md:flex space-x-6 text-sm font-medium text-slate-500 relative">
-          <Link to="/analyze" className={`h-14 flex items-center ${path.includes('/analyze') ? 'text-blue-600 border-b-2 border-blue-600' : 'hover:text-slate-800 transition-colors'}`}>
-            Intelligence Dashboard
-          </Link>
-          
-          <Link to="/price-history" className={`h-14 flex items-center gap-1.5 ${path === '/price-history' ? 'text-blue-600 border-b-2 border-blue-600' : 'hover:text-slate-800 transition-colors'}`}>
-            <Activity className={`w-4 h-4 ${path === '/price-history' ? 'text-blue-600' : 'text-emerald-500'}`} />
-            Price History
-          </Link>
-          
-          <Link to="/savings-reports" className={`h-14 flex items-center transition-colors ${path === '/savings-reports' ? 'text-blue-600 border-b-2 border-blue-600' : 'hover:text-slate-800'}`}>
-            Savings Reports
+    <>
+      <nav className="h-14 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-50">
+        {/* ── Logo ── */}
+        <div className="flex items-center gap-8">
+          <Link
+            to="/"
+            className="flex items-center gap-2 shrink-0"
+            onClick={() => setMobileOpen(false)}
+          >
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm select-none">
+              Rx
+            </div>
+            <span className="text-xl font-bold tracking-tight text-slate-800">RxRadar</span>
           </Link>
 
-          <Link to="/pharmacy-network" className={`h-14 flex items-center transition-colors ${path === '/pharmacy-network' ? 'text-blue-600 border-b-2 border-blue-600' : 'hover:text-slate-800'}`}>
-            Pharmacy Network
-          </Link>
+          {/* ── Desktop nav ── */}
+          <div className="hidden md:flex items-center text-sm font-medium text-slate-500">
+            {NAV_LINKS.map(({ to, label, icon: Icon, exact }) => {
+              const active = isActive(to, exact);
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  className={`h-14 flex items-center gap-1.5 px-3 border-b-2 transition-colors whitespace-nowrap ${
+                    active
+                      ? 'text-blue-600 border-blue-600'
+                      : 'border-transparent hover:text-slate-800 hover:border-slate-300'
+                  }`}
+                >
+                  {/* Show icon only for Home to save space */}
+                  {to === '/' && <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`} />}
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
-      
-      <div className="flex items-center space-x-4">
-        <div className="hidden sm:flex items-center space-x-2 bg-emerald-50 px-3 py-1 rounded-full">
-          <span className="text-[10px] font-bold text-emerald-700 tracking-wider">SAVING 64% TODAY</span>
+
+        {/* ── Right side ── */}
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-full">
+            <span className="text-[10px] font-bold text-emerald-700 tracking-wider">SAVING 64% TODAY</span>
+          </div>
+          <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300 shrink-0" />
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-slate-100 transition-colors"
+            onClick={() => setMobileOpen(o => !o)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X className="w-4 h-4 text-slate-600" /> : <Menu className="w-4 h-4 text-slate-600" />}
+          </button>
+        </div>
+      </nav>
+
+      {/* ── Mobile drawer ── */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 top-14 z-40 bg-black/20" onClick={() => setMobileOpen(false)}>
+          <div
+            className="bg-white border-b border-slate-200 shadow-lg"
+            onClick={e => e.stopPropagation()}
+          >
+            {NAV_LINKS.map(({ to, label, icon: Icon, exact }) => {
+              const active = isActive(to, exact);
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 px-6 py-3.5 text-sm font-medium border-l-2 transition-colors ${
+                    active
+                      ? 'text-blue-600 border-blue-600 bg-blue-50'
+                      : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`} />
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
         <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300 flex items-center justify-center">
         <User className="w-4 h-4 text-slate-500" />
