@@ -25,16 +25,15 @@ export default function SavingsReportPage() {
   const maxVariance = results ? Math.max(...results.map(r => r.priceVariance?.pct ?? 0)) : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 print:bg-white print:pb-0">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 print:bg-white print:pb-0">
       <div className="print:hidden">
         <Navbar />
       </div>
 
-      
       <main className="max-w-[1024px] mx-auto px-6 pt-12">
         <Link 
           to="/analyze" 
-          className="print:hidden inline-flex items-center text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors group mb-8 bg-white border border-slate-200 shadow-sm px-4 py-2 rounded-full"
+          className="print:hidden inline-flex items-center text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors group mb-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm px-4 py-2 rounded-full"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
           BACK TO DASHBOARD
@@ -42,11 +41,11 @@ export default function SavingsReportPage() {
 
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-10 flex justify-between items-end">
           <div>
-            <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-tight mb-2 flex items-center gap-3">
+            <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-tight mb-2 flex items-center gap-3">
               <FileText className="w-8 h-8 text-blue-600" />
               Smart Savings Report
             </h1>
-            <p className="text-slate-500 font-medium">
+            <p className="text-slate-500 dark:text-slate-400 font-medium">
               A comprehensive breakdown of your therapeutic substitutions and projected annual savings.
             </p>
           </div>
@@ -62,9 +61,9 @@ export default function SavingsReportPage() {
         </motion.div>
 
         {!results ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-24 bg-white rounded-2xl border border-slate-200 shadow-sm">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-24 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <ShieldCheck className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-600 text-lg font-bold">No Active Prescription Found</p>
+            <p className="text-slate-600 dark:text-slate-300 text-lg font-bold">No Active Prescription Found</p>
             <p className="text-slate-400 text-sm mt-2 mb-6">Scan a prescription to generate your personalized savings report.</p>
             <Link to="/analyze" className="bg-blue-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-lg inline-block">
               Scan Prescription Now
