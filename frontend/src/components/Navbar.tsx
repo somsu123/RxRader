@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Activity, Home, BarChart2, Network, Menu, X } from 'lucide-react';
-
+import Button from './ui/Button';
 const NAV_LINKS = [
   { to: '/',                 label: 'Home',                icon: Home,     exact: true  },
   { to: '/analyze',          label: 'Intelligence Dashboard', icon: Activity, exact: false },
@@ -65,13 +65,19 @@ export default function Navbar() {
           <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300 shrink-0" />
 
           {/* Mobile hamburger */}
-          <button
-            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-slate-100 transition-colors"
-            onClick={() => setMobileOpen(o => !o)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X className="w-4 h-4 text-slate-600" /> : <Menu className="w-4 h-4 text-slate-600" />}
-          </button>
+          <Button
+  variant="secondary"
+  size="sm"
+  onClick={() => setMobileOpen(o => !o)}
+  aria-label="Toggle menu"
+  className="md:hidden !p-2 rounded-lg flex items-center justify-center"
+>
+  {mobileOpen ? (
+    <X className="w-4 h-4 text-slate-600" />
+  ) : (
+    <Menu className="w-4 h-4 text-slate-600" />
+  )}
+</Button>
         </div>
       </nav>
 
