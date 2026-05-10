@@ -1,14 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Activity, Home, BarChart2, Network, Menu, X } from 'lucide-react';
-
-const NAV_LINKS = [
-  { to: '/',                 label: 'Home',                icon: Home,     exact: true  },
-  { to: '/analyze',          label: 'Intelligence Dashboard', icon: Activity, exact: false },
-  { to: '/price-history',    label: 'Price History',       icon: Activity, exact: true  },
-  { to: '/savings-reports',  label: 'Savings Reports',     icon: BarChart2,exact: true  },
-  { to: '/pharmacy-network', label: 'Pharmacy Network',    icon: Network,  exact: true  },
-] as const;
+import { Activity, TrendingDown, TrendingUp, Calendar, User } from 'lucide-react';
+import { medicines } from '../lib/mockData';
 
 export default function Navbar() {
   const location = useLocation();
@@ -102,7 +95,11 @@ export default function Navbar() {
             })}
           </div>
         </div>
-      )}
-    </>
+        <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300 flex items-center justify-center">
+        <User className="w-4 h-4 text-slate-500" />
+        </div>
+        {/* <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300"></div> */}
+      </div>
+    </nav>
   );
 }
