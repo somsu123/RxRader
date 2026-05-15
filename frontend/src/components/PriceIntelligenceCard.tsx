@@ -8,6 +8,7 @@ import { AnalysisResult, MedicinePrice } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
 
 interface PriceIntelligenceCardProps {
+  key?: React.Key;
   result: AnalysisResult;
   index: number;
 }
