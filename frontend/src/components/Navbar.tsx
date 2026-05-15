@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Activity, TrendingDown, TrendingUp, Calendar, User, Menu, X } from 'lucide-react';
+import { Activity, TrendingDown, TrendingUp, Calendar, User, Menu, X, Home, BarChart2, Network } from 'lucide-react';
 
 const NAV_LINKS = [
-  { to: "/", label: "Home", icon: Activity, exact: true },
-  { to: "/analyze", label: "Analyze", icon: TrendingDown, exact: false },
+  { to: "/", label: "Home", icon: Home, exact: true },
+  { to: "/analyze", label: "Intelligence Dashboard", icon: Activity, exact: false },
   { to: "/price-history", label: "Price History", icon: TrendingUp, exact: false },
-  { to: "/savings-reports", label: "Savings", icon: Calendar, exact: false },
-  { to: "/pharmacy-network", label: "Pharmacy", icon: TrendingDown, exact: false },
+  { to: "/savings-reports", label: "Savings Reports", icon: BarChart2, exact: false },
+  { to: "/pharmacy-network", label: "Pharmacy Network", icon: Network, exact: false },
+  { to: "/prescription-history", label: "History", icon: Calendar, exact: false },
+  { to: "/medication-schedule", label: "Schedule", icon: Calendar, exact: false },
 ];
 
 export default function Navbar() {
@@ -48,7 +50,7 @@ export default function Navbar() {
                       : 'border-transparent hover:text-slate-800 hover:border-slate-300'
                   }`}
                 >
-                  {to === '/' && <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`} />}
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`} />
                   {label}
                 </Link>
               );
