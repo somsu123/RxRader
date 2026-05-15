@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Activity, TrendingDown, TrendingUp, Calendar, User } from 'lucide-react';
-import { medicines } from '../lib/mockData';
+import { Activity, TrendingDown, TrendingUp, Calendar, User, Menu, X } from 'lucide-react';
+
+const NAV_LINKS = [
+  { to: "/", label: "Home", icon: Activity, exact: true },
+  { to: "/analyze", label: "Analyze", icon: TrendingDown, exact: false },
+  { to: "/price-history", label: "Price History", icon: TrendingUp, exact: false },
+  { to: "/savings-reports", label: "Savings", icon: Calendar, exact: false },
+  { to: "/pharmacy-network", label: "Pharmacy", icon: TrendingDown, exact: false },
+];
 
 export default function Navbar() {
   const location = useLocation();
@@ -14,7 +21,7 @@ export default function Navbar() {
   return (
     <>
       <nav className="h-14 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-50">
-        {/* ── Logo ── */}
+        {/* Logo */}
         <div className="flex items-center gap-8">
           <Link
             to="/"
@@ -27,7 +34,7 @@ export default function Navbar() {
             <span className="text-xl font-bold tracking-tight text-slate-800">RxRadar</span>
           </Link>
 
-          {/* ── Desktop nav ── */}
+          {/* Desktop nav */}
           <div className="hidden md:flex items-center text-sm font-medium text-slate-500">
             {NAV_LINKS.map(({ to, label, icon: Icon, exact }) => {
               const active = isActive(to, exact);
@@ -41,7 +48,6 @@ export default function Navbar() {
                       : 'border-transparent hover:text-slate-800 hover:border-slate-300'
                   }`}
                 >
-                  {/* Show icon only for Home to save space */}
                   {to === '/' && <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`} />}
                   {label}
                 </Link>
@@ -50,12 +56,14 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* ── Right side ── */}
+        {/* Right side */}
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-full">
             <span className="text-[10px] font-bold text-emerald-700 tracking-wider">SAVING 64% TODAY</span>
           </div>
-          <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300 shrink-0" />
+          <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300 flex items-center justify-center">
+            <User className="w-4 h-4 text-slate-500" />
+          </div>
 
           {/* Mobile hamburger */}
           <button
@@ -68,7 +76,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* ── Mobile drawer ── */}
+      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 top-14 z-40 bg-black/20" onClick={() => setMobileOpen(false)}>
           <div
@@ -95,11 +103,7 @@ export default function Navbar() {
             })}
           </div>
         </div>
-        <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300 flex items-center justify-center">
-        <User className="w-4 h-4 text-slate-500" />
-        </div>
-        {/* <div className="w-8 h-8 bg-slate-200 rounded-full border border-slate-300"></div> */}
-      </div>
-    </nav>
+      )}
+    </>
   );
 }
