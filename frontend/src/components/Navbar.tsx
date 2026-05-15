@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { to: '/pharmacy-network',  label: 'Pharmacy Network', icon: MapPin,      exact: false },
 ];
 
+
 export default function Navbar() {
   const location = useLocation();
   const path = location.pathname;
@@ -66,13 +67,19 @@ export default function Navbar() {
           </div>
 
           {/* Mobile hamburger */}
-          <button
-            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-slate-100 transition-colors"
-            onClick={() => setMobileOpen(o => !o)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X className="w-4 h-4 text-slate-600" /> : <Menu className="w-4 h-4 text-slate-600" />}
-          </button>
+          <Button
+  variant="secondary"
+  size="sm"
+  onClick={() => setMobileOpen(o => !o)}
+  aria-label="Toggle menu"
+  className="md:hidden !p-2 rounded-lg flex items-center justify-center"
+>
+  {mobileOpen ? (
+    <X className="w-4 h-4 text-slate-600" />
+  ) : (
+    <Menu className="w-4 h-4 text-slate-600" />
+  )}
+</Button>
         </div>
       </nav>
 

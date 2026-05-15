@@ -8,6 +8,7 @@ import { AnalysisResult, PharmacyLocation } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
 import { GeoStatus } from '../hooks/useGeolocation';
 
+import Button from './ui/Button';
 interface PharmacyDashboardProps {
   results: AnalysisResult[];
   // External geo state from parent (PharmacyNetworkPage)
@@ -121,25 +122,100 @@ export default function PharmacyDashboard({
               {results.length} medicine{results.length !== 1 ? 's' : ''} · 5 pharmacies compared
             </p>
           </div>
+
+          <div className="flex items-center gap-3">
+            <GeoStatusPill status={geoStatus} />
+            <Button
+  onClick={detectLocation}
+  disabled={geoStatus === 'loading'}
+  loading={geoStatus === 'loading'}
+  variant="primary"
+  size="sm"
+  className="rounded-xl text-xs font-bold active:scale-95 flex items-center gap-2"
+>
+  {geoStatus !== 'loading' && (
+    <Navigation className="w-3.5 h-3.5" />
+  )}
+  Detect My Location
+</Button>
+              {geoStatus === 'loading'
+                ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                : <Navigation className="w-3.5 h-3.5" />
+              }
+              {geoStatus === 'loading' ? 'Detecting...' : 'Detect My Location'}
+            </button>
+            <Button
+  onClick={() => setShowW3w(s => !s)}
+  variant="secondary"
+  size="sm"
+  className="rounded-xl text-[11px] font-bold uppercase tracking-wide bg-white/10 hover:bg-white/20 text-white"
+>
+  what3words
+</Button>
+          </div>
         </div>
+
+        {showW3w && (
+          <div className="mt-4 bg-white/10 border border-white/10 rounded-xl p-3">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+              <input
+                value={w3wInput}
+                onChange={e => { setW3wInput(e.target.value); setW3wStatus('idle'); setW3wError(null); }}
+                onKeyDown={e => { if (e.key === 'Enter') handleWhat3Words(); }}
+                placeholder="e.g. filled.count.soap"
+                className="flex-1 bg-white/90 text-slate-800 placeholder:text-slate-400 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              <Button
+  onClick={handleWhat3Words}
+  disabled={!isWhat3WordsAddress(w3wInput) || w3wStatus === 'loading'}
+  loading={w3wStatus === 'loading'}
+  variant="primary"
+  size="sm"
+  className="rounded-lg text-xs font-bold"
+>
+  Use what3words
+</Button>
+            </div>
+            {w3wError && (
+              <p className="text-[10px] text-red-200 mt-2 font-semibold">{w3wError}</p>
+            )}
+            {!w3wError && (
+              <p className="text-[10px] text-blue-100/80 mt-2 font-semibold">
+                Enter three words separated by dots to locate your area.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Medicine filter tabs */}
         {results.length > 1 && (
           <div className="mt-4 flex gap-2 flex-wrap">
-            <button
-              onClick={() => setSelectedMed('all')}
-              className={`text-[10px] font-bold px-3 py-1 rounded-lg transition-colors ${selectedMed === 'all' ? 'bg-blue-600 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/20'}`}
-            >
-              All Medicines
-            </button>
+            <Button
+  onClick={() => setSelectedMed('all')}
+  variant={selectedMed === 'all' ? 'primary' : 'secondary'}
+  size="sm"
+  className={`text-[10px] font-bold rounded-lg ${
+    selectedMed === 'all'
+      ? ''
+      : 'bg-white/10 text-slate-300 hover:bg-white/20'
+  }`}
+>
+  All Medicines
+</Button>
             {results.map(r => (
-              <button
-                key={r.medicine.id}
-                onClick={() => setSelectedMed(r.medicine.id)}
-                className={`text-[10px] font-bold px-3 py-1 rounded-lg transition-colors ${selectedMed === r.medicine.id ? 'bg-blue-600 text-white' : 'bg-white/10 text-slate-300 hover:bg-white/20'}`}
-              >
-                {r.medicine.brandName}
-              </button>
+              <Button
+  key={r.medicine.id}
+  onClick={() => setSelectedMed(r.medicine.id)}
+  variant={selectedMed === r.medicine.id ? 'primary' : 'secondary'}
+  size="sm"
+  className={`text-[10px] font-bold rounded-lg ${
+    selectedMed === r.medicine.id
+      ? ''
+      : 'bg-white/10 text-slate-300 hover:bg-white/20'
+  }`}
+>
+  {r.medicine.brandName}
+</Button>
             ))}
           </div>
         )}
