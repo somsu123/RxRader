@@ -1,4 +1,9 @@
-// Types matching the backend medicines.json schema
+import * as pdfjsLib from 'pdfjs-dist';
+import Tesseract from 'tesseract.js';
+import { getCategoriesLocal, getGenericBySalt, getMedicineByMatch, getPharmaciesLocal, searchMedicinesLocal } from './db';
+import { localParseText } from './parser';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 export interface MedicinePrice {
   pharmacy: string;
@@ -8,6 +13,8 @@ export interface MedicinePrice {
   monthlyCost: number;
   pctMoreThanCheapest: number;
   isCheapest: boolean;
+  lat?: number;
+  lng?: number;
 }
 
 export interface HistoricalPrice {
@@ -76,130 +83,136 @@ export interface ParseResult {
   fallback: boolean;
 }
 
-const API_BASE = 'http://localhost:5000/api';
+async function buildResult(matched: Medicine, freqTimesPerDay: number | null): Promise<AnalysisResult> {
+  const dosesPerDay = freqTimesPerDay || 1;
+  const sorted = [...matched.prices].sort((a, b) => a.pricePerUnit - b.pricePerUnit);
+  const bestPrice = sorted[0];
+  const worstPrice = sorted[sorted.length - 1] || bestPrice;
 
-const MOCK_PARSE_RESULT: ParseResult = {
-  rawText: "Patient Name: John Doe\nDate: 25-Oct-2023\nRx\nAugmentin 625mg twice daily for 5 days\nCrocin 500mg thrice daily after meals\nLipitor 10mg once at night\nOmeprazole 20mg before breakfast",
-  fallback: true,
-  parsedDrugs: [
-    { rawLine: "Augmentin 625mg twice daily for 5 days", drugName: "Augmentin", saltComposition: "Amoxicillin 500mg + Potassium Clavulanate 125mg", dosageForm: "Tablet", strength: "625mg", frequency: "TWICE DAILY", freqTimesPerDay: 2, duration: "5 days", dbMatch: null, confidence: "high" },
-    { rawLine: "Crocin 500mg thrice daily after meals", drugName: "Crocin", saltComposition: "Paracetamol 500mg", dosageForm: "Tablet", strength: "500mg", frequency: "THRICE DAILY", freqTimesPerDay: 3, duration: null, dbMatch: null, confidence: "high" },
-    { rawLine: "Lipitor 10mg once at night", drugName: "Lipitor", saltComposition: "Atorvastatin 10mg", dosageForm: "Tablet", strength: "10mg", frequency: "ONCE", freqTimesPerDay: 1, duration: null, dbMatch: null, confidence: "high" },
-    { rawLine: "Omeprazole 20mg before breakfast", drugName: "Omeprazole", saltComposition: "Omeprazole 20mg", dosageForm: "Tablet", strength: "20mg", frequency: "ONCE", freqTimesPerDay: 1, duration: null, dbMatch: null, confidence: "high" }
-  ]
-};
+  const priceVariancePct = bestPrice && bestPrice.pricePerUnit > 0
+    ? Math.round(((worstPrice.pricePerUnit - bestPrice.pricePerUnit) / bestPrice.pricePerUnit) * 100)
+    : 0;
 
-/** Upload image/PDF file → Tesseract OCR or pdf-parse on backend (no API key) */
+  const enrichedPrices = sorted.map((p, idx) => {
+    const monthlyCost = parseFloat((p.pricePerUnit * dosesPerDay * 30).toFixed(2));
+    const vsChepeast = idx === 0 ? 0 : Math.round(((p.pricePerUnit - bestPrice.pricePerUnit) / bestPrice.pricePerUnit) * 100);
+    return {
+      ...p,
+      monthlyCost,
+      pctMoreThanCheapest: vsChepeast,
+      isCheapest: idx === 0
+    };
+  });
+
+  let genericAlt = null;
+  if (!matched.isGeneric && matched.saltComposition) {
+    const gen = await getGenericBySalt(matched.saltComposition, matched.id);
+    if (gen && gen.prices.length > 0) {
+      const gs = [...gen.prices].sort((a, b) => a.pricePerUnit - b.pricePerUnit);
+      const gb = gs[0];
+      const sav = worstPrice.pricePerUnit - gb.pricePerUnit;
+      const genMonthly = parseFloat((gb.pricePerUnit * dosesPerDay * 30).toFixed(2));
+      genericAlt = {
+        medicine: gen,
+        bestPrice: gb.pricePerUnit,
+        bestPharmacy: gb.pharmacy,
+        monthlyCost: genMonthly,
+        savings: parseFloat(sav.toFixed(2)),
+        savingsPercent: Math.round((sav / worstPrice.pricePerUnit) * 100),
+        monthlySavings: parseFloat(((worstPrice.pricePerUnit - gb.pricePerUnit) * dosesPerDay * 30).toFixed(2)),
+        reasoning: `Identical salt (${gen.saltComposition}). Therapeutically equivalent — only the brand differs.`
+      };
+    }
+  }
+
+  const currentMonthlyCost = worstPrice ? parseFloat((worstPrice.pricePerUnit * dosesPerDay * 30).toFixed(2)) : 0;
+  const bestMonthlyCost = bestPrice ? parseFloat((bestPrice.pricePerUnit * dosesPerDay * 30).toFixed(2)) : 0;
+
+  return {
+    medicine: matched,
+    dosesPerDay,
+    currentInfo: { 
+      price: worstPrice?.pricePerUnit || 0, 
+      pharmacy: worstPrice?.pharmacy || '', 
+      monthlyCost: currentMonthlyCost 
+    },
+    bestInfo: { 
+      price: bestPrice?.pricePerUnit || 0, 
+      pharmacy: bestPrice?.pharmacy || '', 
+      monthlyCost: bestMonthlyCost, 
+      allPrices: enrichedPrices 
+    },
+    priceVariance: {
+      pct: priceVariancePct,
+      cheapest: { pharmacy: bestPrice?.pharmacy || '', price: bestPrice?.pricePerUnit || 0 },
+      mostExpensive: { pharmacy: worstPrice?.pharmacy || '', price: worstPrice?.pricePerUnit || 0 },
+      message: priceVariancePct > 0
+        ? `You pay ${priceVariancePct}% more at ${worstPrice.pharmacy} vs ${bestPrice.pharmacy}`
+        : 'All pharmacies have similar pricing'
+    },
+    generic: genericAlt
+  };
+}
+
 export async function parsePrescriptionFile(file: File): Promise<ParseResult> {
-  try {
-    const form = new FormData();
-    form.append('file', file);
-    const res = await fetch(`${API_BASE}/parse-prescription`, { method: 'POST', body: form });
-    if (!res.ok) throw new Error(`Parse failed: ${res.statusText}`);
-    const data = await res.json();
-    if (data.parsedDrugs && data.parsedDrugs.length > 0) return data;
-    return MOCK_PARSE_RESULT;
-  } catch (err) {
-    console.log("Fallback triggered for PDF due to error:", err);
-    return MOCK_PARSE_RESULT;
+  let rawText = '';
+  
+  if (file.type === 'application/pdf') {
+    try {
+      const buffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+      let text = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map((item: any) => item.str).join(' ') + '\n';
+      }
+      rawText = text;
+    } catch (e) {
+      console.error('Local PDF Parse Error:', e);
+    }
+  } else if (file.type.startsWith('image/')) {
+    try {
+      const worker = await Tesseract.createWorker('eng', 1);
+      const ret = await worker.recognize(file);
+      rawText = ret.data.text;
+      await worker.terminate();
+    } catch (e) {
+      console.error('Local OCR Error:', e);
+    }
   }
+
+  const parsedDrugs = await localParseText(rawText);
+  return { parsedDrugs, rawText, fallback: false };
 }
 
-/** Manual text → local regex parser on backend (no API key) */
 export async function parsePrescriptionText(text: string): Promise<ParseResult> {
-  try {
-    const form = new FormData();
-    form.append('text', text);
-    const res = await fetch(`${API_BASE}/parse-prescription`, { method: 'POST', body: form });
-    if (!res.ok) throw new Error(`Parse failed: ${res.statusText}`);
-    const data = await res.json();
-    if (data.parsedDrugs && data.parsedDrugs.length > 0) return data;
-    return MOCK_PARSE_RESULT;
-  } catch (err) {
-    console.log("Fallback triggered for Text due to error:", err);
-    return MOCK_PARSE_RESULT;
-  }
+  const parsedDrugs = await localParseText(text);
+  return { parsedDrugs, rawText: text, fallback: false };
 }
-
-const MOCK_ANALYSIS_RESULTS: AnalysisResult[] = [
-  {
-    medicine: {
-      id: "1", brandName: "Augmentin", genericName: "Amoxicillin", saltComposition: "Amoxicillin + Clavulanate", dosageForm: "Tablet", strength: "625mg", manufacturer: "GSK", isGeneric: false, basePrice: 45.0, category: "Antibiotics",
-      prices: [
-        { pharmacy: "Apollo Pharmacy", pricePerUnit: 45, availability: 'In Stock', distanceKm: 1.2, monthlyCost: 2700, pctMoreThanCheapest: 30, isCheapest: false },
-        { pharmacy: "Jan Aushadhi", pricePerUnit: 15, availability: 'In Stock', distanceKm: 4.5, monthlyCost: 900, pctMoreThanCheapest: 0, isCheapest: true }
-      ],
-      historicalPrices: [], description: "Antibiotic", indications: ["Infection"]
-    },
-    dosesPerDay: 2,
-    currentInfo: { price: 45, pharmacy: "Apollo Pharmacy", monthlyCost: 2700 },
-    bestInfo: { price: 15, pharmacy: "Jan Aushadhi", monthlyCost: 900, allPrices: [
-        { pharmacy: "Jan Aushadhi", pricePerUnit: 15, availability: 'In Stock', distanceKm: 4.5, monthlyCost: 900, pctMoreThanCheapest: 0, isCheapest: true },
-        { pharmacy: "Apollo Pharmacy", pricePerUnit: 45, availability: 'In Stock', distanceKm: 1.2, monthlyCost: 2700, pctMoreThanCheapest: 200, isCheapest: false }
-    ] },
-    priceVariance: { pct: 200, cheapest: { pharmacy: "Jan Aushadhi", price: 15 }, mostExpensive: { pharmacy: "Apollo Pharmacy", price: 45 }, message: "Huge savings" },
-    generic: {
-      medicine: {
-        id: "2", brandName: "Moxikind-CV", genericName: "Amoxicillin", saltComposition: "Amoxicillin + Clavulanate", dosageForm: "Tablet", strength: "625mg", manufacturer: "Mankind", isGeneric: true, basePrice: 18.0, category: "Antibiotics",
-        prices: [], historicalPrices: [], description: "Generic", indications: ["Infection"]
-      },
-      bestPrice: 15, bestPharmacy: "Jan Aushadhi", monthlyCost: 900, savings: 30, savingsPercent: 66, monthlySavings: 1800, reasoning: "Identical salt. Therapeutically equivalent."
-    }
-  },
-  {
-    medicine: {
-      id: "3", brandName: "Lipitor", genericName: "Atorvastatin", saltComposition: "Atorvastatin 10mg", dosageForm: "Tablet", strength: "10mg", manufacturer: "Pfizer", isGeneric: false, basePrice: 25.0, category: "Cardiovascular",
-      prices: [
-        { pharmacy: "Netmeds", pricePerUnit: 25, availability: 'In Stock', distanceKm: 2.1, monthlyCost: 750, pctMoreThanCheapest: 10, isCheapest: false },
-        { pharmacy: "MedPlus", pricePerUnit: 20, availability: 'In Stock', distanceKm: 1.5, monthlyCost: 600, pctMoreThanCheapest: 0, isCheapest: true }
-      ],
-      historicalPrices: [], description: "Statin", indications: ["Cholesterol"]
-    },
-    dosesPerDay: 1,
-    currentInfo: { price: 25, pharmacy: "Netmeds", monthlyCost: 750 },
-    bestInfo: { price: 20, pharmacy: "MedPlus", monthlyCost: 600, allPrices: [
-        { pharmacy: "MedPlus", pricePerUnit: 20, availability: 'In Stock', distanceKm: 1.5, monthlyCost: 600, pctMoreThanCheapest: 0, isCheapest: true },
-        { pharmacy: "Netmeds", pricePerUnit: 25, availability: 'In Stock', distanceKm: 2.1, monthlyCost: 750, pctMoreThanCheapest: 25, isCheapest: false }
-    ] },
-    priceVariance: { pct: 25, cheapest: { pharmacy: "MedPlus", price: 20 }, mostExpensive: { pharmacy: "Netmeds", price: 25 }, message: "Save 25%" },
-    generic: {
-      medicine: {
-        id: "4", brandName: "Atorva", genericName: "Atorvastatin", saltComposition: "Atorvastatin 10mg", dosageForm: "Tablet", strength: "10mg", manufacturer: "Zydus", isGeneric: true, basePrice: 8.0, category: "Cardiovascular",
-        prices: [], historicalPrices: [], description: "Generic", indications: ["Cholesterol"]
-      },
-      bestPrice: 8, bestPharmacy: "Jan Aushadhi", monthlyCost: 240, savings: 17, savingsPercent: 68, monthlySavings: 510, reasoning: "Same API. Generic alternative."
-    }
-  }
-];
 
 export async function analyzePrescription(parsedDrugs: ParsedDrug[]): Promise<AnalysisResult[]> {
-  try {
-    const res = await fetch(`${API_BASE}/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ parsedDrugs })
-    });
-    if (!res.ok) throw new Error('Analysis failed');
-    const data = await res.json();
-    if (data.results && data.results.length > 0) return data.results;
-    return MOCK_ANALYSIS_RESULTS;
-  } catch (err) {
-    console.log("Fallback triggered for Analysis due to error:", err);
-    return MOCK_ANALYSIS_RESULTS;
+  const results: AnalysisResult[] = [];
+  
+  for (const drug of parsedDrugs) {
+    let matched = await getMedicineByMatch(drug.drugName);
+    if (!matched && drug.saltComposition) {
+      matched = await getMedicineByMatch(drug.saltComposition);
+    }
+    if (matched) {
+      results.push(await buildResult(matched, drug.freqTimesPerDay));
+    }
   }
+  
+  return results;
 }
 
 export async function searchMedicines(q: string): Promise<Medicine[]> {
-  const res = await fetch(`${API_BASE}/medicines?q=${encodeURIComponent(q)}`);
-  if (!res.ok) throw new Error('Search failed');
-  const data = await res.json();
-  return data.medicines;
+  return searchMedicinesLocal(q);
 }
 
 export async function getCategories(): Promise<string[]> {
-  const res = await fetch(`${API_BASE}/categories`);
-  if (!res.ok) return [];
-  return res.json();
+  return getCategoriesLocal();
 }
 
 export interface PharmacyLocation {
@@ -213,26 +226,39 @@ export interface PharmacyLocation {
   monthlyCost?: number;
 }
 
+function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLng/2)**2;
+  return parseFloat((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1));
+}
+
 export async function getNearestPharmacies(
   lat: number,
   lng: number,
   medicineId?: string
 ): Promise<{ userLocation: { lat: number; lng: number }; pharmacies: PharmacyLocation[] }> {
-  const res = await fetch(`${API_BASE}/nearest-pharmacy`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ lat, lng, medicineId })
-  });
-  if (!res.ok) throw new Error('Geolocation query failed');
-  return res.json();
+  const chains = await getPharmaciesLocal();
+  
+  let sorted = chains.map(chain => ({
+    name: chain.name,
+    color: chain.color,
+    distanceKm: haversine(lat, lng, chain.lat, chain.lng),
+    lat: chain.lat,
+    lng: chain.lng
+  })).sort((a, b) => a.distanceKm - b.distanceKm);
+  
+  if (medicineId) {
+    // If a medicine is specified, we would normally append its prices.
+    // For now we just return the sorted pharmacies. The components usually get prices from AnalysisResult anyway.
+  }
+  
+  return { userLocation: { lat, lng }, pharmacies: sorted };
 }
 
 export async function resolveWhat3Words(words: string): Promise<{ lat: number; lng: number; words: string }> {
-  const res = await fetch(`${API_BASE}/what3words`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ words })
-  });
-  if (!res.ok) throw new Error('what3words lookup failed');
-  return res.json();
+  // As a Serverless PWA, we cannot securely hide API keys.
+  // This feature is disabled in offline mode.
+  throw new Error('What3Words lookup is disabled in Offline PWA mode. Please use device location.');
 }
