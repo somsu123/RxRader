@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { ArrowRight, Zap, ShieldCheck, HeartPulse } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import HowItWorksModal from './HowItWorksModal';
-
+import Button from './ui/Button';
 export default function Hero() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -34,19 +34,24 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link 
-              to="/analyze" 
-              className="group bg-blue-600 text-white px-8 py-4 rounded-2xl text-lg font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 flex items-center active:scale-95"
-            >
-              Analyze Prescription
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="px-8 py-4 rounded-2xl text-lg font-bold text-gray-600 hover:bg-gray-100 transition-all"
-            >
-              See How it Works
-            </button>
+            <Link to="/analyze" className="inline-block">
+  <Button
+    variant="primary"
+    size="lg"
+    className="group rounded-2xl shadow-xl shadow-blue-200 flex items-center active:scale-95"
+  >
+    Analyze Prescription
+    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+  </Button>
+</Link>
+            <Button
+  variant="secondary"
+  size="lg"
+  onClick={() => setIsModalOpen(true)}
+  className="rounded-2xl text-gray-600"
+>
+  See How it Works
+</Button>
           </div>
 
           <div className="mt-20 grid grid-cols-2 md:grid-cols-3 gap-8 items-center opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
