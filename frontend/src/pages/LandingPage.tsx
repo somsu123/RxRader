@@ -1,4 +1,5 @@
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import Hero from '../components/Hero';
 import { motion } from 'motion/react';
 import { ShoppingCart, Share2, Search, TrendingDown, CheckCircle, Zap } from 'lucide-react';
@@ -95,17 +96,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="py-12 border-t border-gray-100 bg-white">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center space-x-2 mb-6">
-            <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-               <Search className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-gray-900 uppercase tracking-widest text-sm">RxRadar</span>
-          </div>
-          <p className="text-gray-400 text-xs">© 2026 RxRadar Pulse. All rights reserved. Not a substitute for professional medical advice.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, TrendingDown, TrendingUp, Calendar, Activity, Search, Pill } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { medicines, generateHistoricalPrices } from '../lib/mockData';
 
 export default function PriceHistoryPage() {
@@ -147,6 +148,7 @@ export default function PriceHistoryPage() {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

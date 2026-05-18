@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { analyzePrescription, AnalysisResult, ParsedDrug } from '../lib/api';
 import { Sparkles, ArrowLeft, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
+import Footer from '../components/Footer';
 
 export default function AnalyzePage() {
   const [loading, setLoading]   = useState(false);
@@ -129,6 +130,7 @@ export default function AnalyzePage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }
