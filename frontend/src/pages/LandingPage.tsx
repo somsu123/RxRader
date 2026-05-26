@@ -1,8 +1,13 @@
+import { Search, TrendingDown, Zap, CheckCircle2, Pill } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
-import { motion } from 'motion/react';
-import { ShoppingCart, Share2, Search, TrendingDown, CheckCircle, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
+
+const medicines = [
+  { name: 'Paracetamol 500mg', brand: '₹85', generic: '₹12', saving: 86 },
+  { name: 'Metformin 850mg', brand: '₹120', generic: '₹8', saving: 93 },
+  { name: 'Atorvastatin 10mg', brand: '₹200', generic: '₹22', saving: 89 },
+];
 
 export default function LandingPage() {
   return (
@@ -19,7 +24,6 @@ export default function LandingPage() {
               <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Intelligence-Driven Savings</h2>
               <p className="mt-4 text-xl text-gray-500">More than just price comparison. It's healthcare optimization.</p>
             </div>
-
             <div className="grid md:grid-cols-3 gap-8">
               <FeatureCard 
                 icon={<Search className="w-6 h-6 text-blue-600" />}
@@ -52,23 +56,75 @@ export default function LandingPage() {
                   <Step icon="03" title="Save up to 80%" text="Get a personalized buy plan and pharmacist scripts to start saving immediately." />
                 </div>
               </div>
+
+              {/* Improved mockup card */}
               <div className="relative">
-                <div className="bg-blue-600 rounded-[3rem] p-4 shadow-2xl shadow-blue-200 aspect-square flex items-center justify-center">
-                  <div className="bg-white rounded-[2.5rem] w-full h-full p-8 flex flex-col justify-center">
-                    <div className="space-y-4">
-                      <div className="h-4 bg-gray-100 rounded-full w-3/4" />
-                      <div className="h-4 bg-gray-100 rounded-full w-1/2" />
-                      <div className="h-12 bg-blue-50 rounded-2xl w-full flex items-center px-4">
-                        <div className="w-6 h-6 bg-blue-600 rounded-full mr-3 animate-pulse" />
-                        <div className="h-2 bg-blue-200 rounded-full w-1/2" />
+                {/* Glow effect */}
+                <div className="absolute inset-0 bg-blue-400 rounded-[3rem] blur-2xl opacity-20 scale-95" />
+                
+                <div className="relative bg-blue-600 rounded-[3rem] p-3.5 shadow-2xl shadow-blue-200 aspect-square flex items-center justify-center">
+                  <div className="bg-white rounded-[2.5rem] w-full h-full p-6 flex flex-col justify-between">
+                    
+                    {/* Card header */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
+                          <Pill className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">Prescription Analysis</p>
+                          <p className="text-[10px] text-slate-400">3 medicines detected</p>
+                        </div>
                       </div>
-                      <div className="pt-4 border-t border-gray-50">
-                        <div className="flex justify-between items-center">
-                          <div className="h-3 bg-green-100 rounded-full w-1/4" />
-                          <div className="h-6 bg-green-600 rounded-full w-1/3" />
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full">✓ Optimized</span>
+                    </div>
+
+                    {/* Medicine rows */}
+                    <div className="space-y-2 flex-1 my-2">
+                      {medicines.map((med, i) => (
+                        <div key={i} className="bg-slate-50 rounded-2xl px-4 py-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-bold text-slate-700">{med.name}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[10px] text-slate-400 line-through">{med.brand}</span>
+                              <span className="text-[10px] font-bold text-green-600">{med.generic}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                              -{med.saving}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-100 pt-3">
+                      {/* Savings bar */}
+                      <div className="mb-3">
+                        <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+                          <span>Savings progress</span>
+                          <span className="font-bold text-green-600">64% saved</span>
+                        </div>
+                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full w-[64%] bg-gradient-to-r from-green-400 to-emerald-500 rounded-full" />
+                        </div>
+                      </div>
+
+                      {/* Bottom row */}
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-[10px] text-slate-400">You save</p>
+                          <p className="text-lg font-black text-slate-800">₹1,247 <span className="text-green-500 text-sm">/ month</span></p>
+                        </div>
+                        <div className="bg-blue-600 rounded-2xl px-4 py-2 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                          <span className="text-white text-xs font-bold">View Plan</span>
                         </div>
                       </div>
                     </div>
+
                   </div>
                 </div>
               </div>
