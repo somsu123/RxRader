@@ -6,11 +6,23 @@ const { createWorker } = require('tesseract.js');
 const pdfParse = require('pdf-parse');
 const dbApi = require('./db');
 
+const helmet  = require('helmet');
+const rateLimit = require('express-rate-limit');
+
 const app  = express();
 const PORT = 5000;
 
+app.use(helmet());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 100, 
+  message: "Too many requests from this IP, please try again later."
+});
+app.use(limiter);
+
 app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'] }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Multer: store uploads in memory (no disk clutter)
 const upload = multer({

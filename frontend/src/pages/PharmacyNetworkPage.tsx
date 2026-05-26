@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { motion } from 'motion/react';
 import { AnalysisResult } from '../lib/api';
 import { MapPin, ArrowLeft } from 'lucide-react';
@@ -51,6 +52,7 @@ export default function PharmacyNetworkPage() {
           </motion.div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }
