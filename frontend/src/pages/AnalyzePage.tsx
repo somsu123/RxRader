@@ -15,6 +15,7 @@ import {
   ChevronRight, Activity
 } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
+import Footer from '../components/Footer';
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 const TABS = [
@@ -483,6 +484,7 @@ export default function AnalyzePage() {
           )}
         </AnimatePresence>
       </main>
+      <Footer />
     </div>
   );
 }

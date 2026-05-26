@@ -49,7 +49,7 @@ export default function Navbar() {
                       : 'border-transparent hover:text-slate-800 hover:border-slate-300'
                   }`}
                 >
-                  {to === '/' && <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`} />}
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`} />
                   {label}
                 </Link>
               );

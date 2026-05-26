@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { ArrowLeft, FileText, Download, ShieldCheck, TrendingDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import SavingsPlanCard from '../components/SavingsPlanCard';
 import SummaryCard from '../components/SummaryCard';
 import { formatCurrency } from '../lib/utils';
@@ -113,6 +114,7 @@ export default function SavingsReportPage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

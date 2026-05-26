@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   ImageIcon, FileText, Upload, X, Sparkles, CheckCircle2,
   AlertCircle, Clock, Pill, ChevronRight, RotateCcw, Info,
-  FileSearch, Eye, EyeOff
+  FileSearch, Eye, EyeOff, Camera
 } from 'lucide-react';
 import { parsePrescriptionFile, parsePrescriptionText, ParsedDrug } from '../lib/api';
 
@@ -12,7 +12,7 @@ interface PrescriptionEngineProps {
   isLoading?: boolean;
 }
 
-type Tab    = 'file' | 'text';
+type Tab    = 'file' | 'camera' | 'text';
 type Stage  = 'input' | 'parsing' | 'preview';
 
 const EXAMPLE_RX = `Augmentin 625mg - twice daily for 5 days
@@ -20,7 +20,7 @@ Crocin 500mg - thrice daily after meals
 Lipitor 10mg - once at night
 Omeprazole 20mg - before breakfast`;
 
-const ACCEPT_TYPES = 'image/jpeg,image/png,image/bmp,image/tiff,image/webp,application/pdf';
+const ACCEPT_TYPES = 'image/*,application/pdf';
 
 const confidenceBadge: Record<string, string> = {
   high:   'bg-emerald-100 text-emerald-700',
@@ -47,6 +47,128 @@ export default function PrescriptionEngine({ onAnalyze, isLoading }: Prescriptio
   const [error, setError]           = useState<string | null>(null);
   const [ocrStatus, setOcrStatus]   = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Camera State & Ref ───────────────────────────────────────────────────
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [activeDeviceIdx, setActiveDeviceIdx] = useState<number>(0);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [isCameraLoading, setIsCameraLoading] = useState(false);
+
+  // Start the camera stream
+  const startCamera = async (deviceIdx: number = 0) => {
+    setIsCameraLoading(true);
+    setCameraError(null);
+    
+    // Stop any existing stream first
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+
+    try {
+      // First get basic permission
+      const initialStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      
+      // Enumerate all devices to find cameras
+      const allDevices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = allDevices.filter(d => d.kind === 'videoinput');
+      setDevices(videoDevices);
+
+      // Select device
+      let constraints: MediaTrackConstraints = {
+        facingMode: 'environment' // Default to rear camera on mobile
+      };
+
+      if (videoDevices.length > 0) {
+        const targetIdx = deviceIdx % videoDevices.length;
+        setActiveDeviceIdx(targetIdx);
+        constraints = {
+          deviceId: { exact: videoDevices[targetIdx].deviceId }
+        };
+      }
+
+      // Stop initial stream tracks before starting the targeted stream
+      initialStream.getTracks().forEach(track => track.stop());
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: constraints
+      });
+      
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (err: any) {
+      console.error('Camera access error:', err);
+      setCameraError('Could not access camera. Please check permissions.');
+    } finally {
+      setIsCameraLoading(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    
+    // Create a canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      setCapturedImage(dataUrl);
+      
+      // Stop stream temporarily during preview
+      stopCamera();
+    }
+  };
+
+  const dataURLtoFile = (dataurl: string, filename: string): File => {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
+
+  const handleUseCapturedPhoto = () => {
+    if (!capturedImage) return;
+    const file = dataURLtoFile(capturedImage, 'captured-prescription.jpg');
+    handleFile(file);
+    setTab('file');
+  };
+
+  // Stop camera stream when tab changes to non-camera
+  React.useEffect(() => {
+    if (tab === 'camera') {
+      setCapturedImage(null);
+      startCamera(0);
+    } else {
+      stopCamera();
+    }
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [tab]);
 
   // ── File handling ────────────────────────────────────────────────────────
   const handleFile = (file: File) => {
@@ -144,6 +266,7 @@ export default function PrescriptionEngine({ onAnalyze, isLoading }: Prescriptio
               {(() => {
                 const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
                   { id: 'file', label: 'Image / PDF', icon: <Upload className="w-3.5 h-3.5" /> },
+                  { id: 'camera', label: 'Camera', icon: <Camera className="w-3.5 h-3.5" /> },
                   { id: 'text', label: 'Type / Paste', icon: <FileText className="w-3.5 h-3.5" /> },
                 ];
                 return (
@@ -194,6 +317,7 @@ export default function PrescriptionEngine({ onAnalyze, isLoading }: Prescriptio
                         ref={fileInputRef}
                         type="file"
                         accept={ACCEPT_TYPES}
+                        capture="environment"
                         className="hidden"
                         onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
                       />
@@ -235,6 +359,126 @@ export default function PrescriptionEngine({ onAnalyze, isLoading }: Prescriptio
                 </>
               )}
 
+              {/* CAMERA INPUT */}
+              {tab === 'camera' && (
+                <div className="flex flex-col gap-4">
+                  {/* Viewfinder Container */}
+                  <div className="relative aspect-[4/3] bg-slate-950 rounded-xl overflow-hidden shadow-inner border border-slate-800 flex items-center justify-center">
+                    {!capturedImage && !cameraError && (
+                      <>
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Scanning Target Box Overlays */}
+                        <div className="absolute inset-0 border-[24px] border-slate-950/40 pointer-events-none flex items-center justify-center">
+                          <div className="w-5/6 h-5/6 border-2 border-dashed border-blue-400/60 rounded-lg relative">
+                            {/* Scanning Guide HUD corners */}
+                            <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-blue-500 -mt-1 -ml-1 rounded-tl-sm" />
+                            <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-blue-500 -mt-1 -mr-1 rounded-tr-sm" />
+                            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-blue-500 -mb-1 -ml-1 rounded-bl-sm" />
+                            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-blue-500 -mb-1 -mr-1 rounded-br-sm" />
+                            
+                            {/* Scanner scanning line animation */}
+                            <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent shadow-[0_0_8px_rgba(96,165,250,0.8)] top-1/2" />
+                          </div>
+                        </div>
+                        
+                        {isCameraLoading && (
+                          <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center gap-3">
+                            <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                            <p className="text-xs text-slate-400 font-medium">Initializing camera...</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {capturedImage && (
+                      <img
+                        src={capturedImage}
+                        alt="Captured prescription"
+                        className="w-full h-full object-contain bg-slate-950"
+                      />
+                    )}
+
+                    {cameraError && (
+                      <div className="p-6 text-center max-w-xs flex flex-col items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-red-950/30 border border-red-500/20 flex items-center justify-center text-red-400">
+                          <AlertCircle className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-200">Camera Access Blocked</p>
+                          <p className="text-[11px] text-slate-400 mt-1">
+                            Please enable camera permissions in your browser settings to scan prescriptions directly.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => startCamera(activeDeviceIdx)}
+                          className="mt-2 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all"
+                        >
+                          Try Again
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Camera Controls */}
+                  <div className="flex items-center justify-between px-2">
+                    {!capturedImage && !cameraError ? (
+                      <>
+                        <div className="w-10 flex justify-center">
+                          {devices.length > 1 && (
+                            <button
+                              onClick={() => startCamera(activeDeviceIdx + 1)}
+                              className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90"
+                              title="Switch Camera"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Capture Shutter Button */}
+                        <button
+                          onClick={capturePhoto}
+                          disabled={isCameraLoading}
+                          className="w-16 h-16 rounded-full border-4 border-slate-200 p-1 flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-40"
+                        >
+                          <div className="w-full h-full rounded-full bg-white hover:bg-slate-100 shadow-md" />
+                        </button>
+
+                        <div className="w-10" /> {/* Spacer */}
+                      </>
+                    ) : capturedImage ? (
+                      <div className="flex gap-3 w-full">
+                        <button
+                          onClick={() => {
+                            setCapturedImage(null);
+                            startCamera(activeDeviceIdx);
+                          }}
+                          className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <RotateCcw className="w-4 h-4" /> Retake
+                        </button>
+                        <button
+                          onClick={handleUseCapturedPhoto}
+                          className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-200/50 transition-all active:scale-95"
+                        >
+                          <CheckCircle2 className="w-4 h-4" /> Use Photo
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <p className="text-[10px] text-slate-400 text-center">
+                    Supported on all modern mobile and desktop browsers · Processed locally
+                  </p>
+                </div>
+              )}
+
               {/* TEXT INPUT */}
               {tab === 'text' && (
                 <div>
@@ -263,24 +507,28 @@ export default function PrescriptionEngine({ onAnalyze, isLoading }: Prescriptio
               )}
 
               {/* Parse Button */}
-              <button
-                onClick={handleParse}
-                disabled={!canParse}
-                className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200/50 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:grayscale active:scale-95"
-              >
-                <FileSearch className="w-4 h-4" />
-                {tab === 'file' ? (uploadedFile?.type === 'application/pdf' ? 'Extract PDF Text & Parse' : 'Run OCR & Parse') : 'Parse Prescription'}
-              </button>
+              {tab !== 'camera' && (
+                <button
+                  onClick={handleParse}
+                  disabled={!canParse}
+                  className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200/50 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:grayscale active:scale-95"
+                >
+                  <FileSearch className="w-4 h-4" />
+                  {tab === 'file' ? (uploadedFile?.type === 'application/pdf' ? 'Extract PDF Text & Parse' : 'Run OCR & Parse') : 'Parse Prescription'}
+                </button>
+              )}
 
               {/* Info */}
-              <div className="mt-4 flex items-start gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                <Info className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-slate-400 leading-relaxed">
-                  <strong className="text-slate-600">Images</strong> are processed using Tesseract OCR (runs locally in Node.js).{' '}
-                  <strong className="text-slate-600">PDFs</strong> use pdf-parse for text extraction.{' '}
-                  <span className="text-emerald-600 font-semibold">No data leaves your machine.</span>
-                </p>
-              </div>
+              {tab !== 'camera' && (
+                <div className="mt-4 flex items-start gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                  <Info className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-slate-400 leading-relaxed">
+                    <strong className="text-slate-600">Images</strong> are processed using Tesseract OCR (runs locally in Node.js).{' '}
+                    <strong className="text-slate-600">PDFs</strong> use pdf-parse for text extraction.{' '}
+                    <span className="text-emerald-600 font-semibold">No data leaves your machine.</span>
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
 
