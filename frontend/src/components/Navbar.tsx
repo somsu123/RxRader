@@ -11,7 +11,8 @@ import {
   BarChart2,
   Network,
   Menu,
-  X
+  X,
+  HeartPulse
 } from 'lucide-react';
 
 import { medicines } from '../lib/mockData';
@@ -20,6 +21,7 @@ import Button from './ui/Button';
 const NAV_LINKS = [
   { to: '/',                 label: 'Home',                    icon: Home,      exact: true  },
   { to: '/analyze',          label: 'Intelligence Dashboard', icon: Activity,  exact: false },
+  { to: '/test',             label: 'Symptom Test',           icon: HeartPulse, exact: true  },
   { to: '/price-history',    label: 'Price History',          icon: Activity,  exact: true  },
   { to: '/savings-reports',  label: 'Savings Reports',        icon: BarChart2, exact: true  },
   { to: '/pharmacy-network', label: 'Pharmacy Network',       icon: Network,   exact: true  },

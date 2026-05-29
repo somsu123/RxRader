@@ -44,6 +44,16 @@ export default function Hero() {
     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
   </Button>
 </Link>
+            <Link to="/test" className="inline-block">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="rounded-2xl text-gray-700 flex items-center active:scale-95"
+              >
+                Take Test
+                <HeartPulse className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
             <Button
   variant="secondary"
   size="lg"

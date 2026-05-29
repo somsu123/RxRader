@@ -4,7 +4,8 @@ import { ArrowLeft, TrendingDown, TrendingUp, Calendar, Activity, Search, Pill }
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { medicines, generateHistoricalPrices } from '../lib/mockData';
+import PriceHistorySkeletonCard from '../components/PriceHistorySkeletonCard';
+import { medicines } from '../lib/mockData';
 
 export default function PriceHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');

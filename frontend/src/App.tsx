@@ -4,6 +4,7 @@ import AnalyzePage from './pages/AnalyzePage';
 import PriceHistoryPage from './pages/PriceHistoryPage';
 import SavingsReportPage from './pages/SavingsReportPage';
 import PharmacyNetworkPage from './pages/PharmacyNetworkPage';
+import TakeTestPage from './pages/TakeTestPage';
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/analyze" element={<AnalyzePage />} />
+        <Route path="/test" element={<TakeTestPage />} />
         <Route path="/price-history" element={<PriceHistoryPage />} />
         <Route path="/savings-reports" element={<SavingsReportPage />} />
         <Route path="/pharmacy-network" element={<PharmacyNetworkPage />} />
