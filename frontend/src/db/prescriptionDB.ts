@@ -1,22 +1,24 @@
 import Dexie, { Table } from 'dexie';
 
+export interface Medicine {
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 export interface Prescription {
   id?: number;
   uniqueId: string;
   date: Date;
-  medicines: Array<{
-    name: string;
-    price: number;
-    quantity: number;
-  }>;
+  medicines: Medicine[];
   totalCost: number;
   savingsAmount: number;
   pharmacyName?: string;
-  prescriptionImage?: string; // base64
+  prescriptionImage?: string;
 }
 
 export class PrescriptionDatabase extends Dexie {
-  prescriptions!: Table<Prescription>;
+  prescriptions!: Table<Prescription, number>;
 
   constructor() {
     super('PrescriptionDB');
