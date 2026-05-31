@@ -7,6 +7,7 @@ import {
 import { AnalysisResult, PharmacyLocation, getNearestPharmacies, resolveWhat3Words } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
 import Button from './ui/Button';
+
 interface PharmacyDashboardProps {
   results: AnalysisResult[];
 }
@@ -20,14 +21,6 @@ const PHARMACY_COLORS: Record<string, string> = {
   'Netmeds':         '#3b82f6',
   '1mg':             '#f97316',
   'Jan Aushadhi':    '#a855f7',
-};
-
-const PHARMACY_BG: Record<string, string> = {
-  'Apollo Pharmacy': 'bg-red-50 border-red-200',
-  'MedPlus':         'bg-green-50 border-green-200',
-  'Netmeds':         'bg-blue-50 border-blue-200',
-  '1mg':             'bg-orange-50 border-orange-200',
-  'Jan Aushadhi':    'bg-purple-50 border-purple-200',
 };
 
 const W3W_PATTERN = /^(?:[a-z0-9]+\.){2}[a-z0-9]+$/i;
@@ -63,13 +56,14 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [selectedMed, setSelectedMed] = useState<string>('all');
 
+  const pharmacyNames = ['Apollo Pharmacy', 'MedPlus', 'Netmeds', '1mg', 'Jan Aushadhi'];
+
   const applyDistances = (data: { pharmacies: PharmacyLocation[] }) => {
     const distMap: Record<string, number> = {};
     data.pharmacies.forEach(p => { distMap[p.name] = p.distanceKm; });
     setLiveDistances(distMap);
   };
 
-  // ── Geolocation ─────────────────────────────────────────────────────────────
   const detectLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setGeoStatus('error');
@@ -117,15 +111,10 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
     }
   };
 
-  // ── Build unified pharmacy rows ──────────────────────────────────────────────
-  // Aggregate: for each pharmacy, collect prices across all selected medicines
-  const pharmacyNames = ['Apollo Pharmacy', 'MedPlus', 'Netmeds', '1mg', 'Jan Aushadhi'];
-
   const activeResults = selectedMed === 'all'
     ? results
     : results.filter(r => r.medicine.id === selectedMed);
 
-  // Per-pharmacy aggregated data
   const rows = pharmacyNames.map(pharmacyName => {
     const priceEntries = activeResults.flatMap(r =>
       r.bestInfo.allPrices.filter(p => p.pharmacy === pharmacyName)
@@ -142,7 +131,7 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
     return {
       name:        pharmacyName,
       avgUnit:     parseFloat(avgUnit.toFixed(2)),
-      totalMonthly:parseFloat(totalMonthly.toFixed(2)),
+      totalMonthly: parseFloat(totalMonthly.toFixed(2)),
       totalAnnual: parseFloat((totalMonthly * 12).toFixed(2)),
       availability: allInStock ? 'In Stock' : someInStock ? 'Partial' : 'Limited',
       distanceKm:  distKm,
@@ -150,7 +139,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
     };
   });
 
-  // ── Sort ─────────────────────────────────────────────────────────────────────
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir('asc'); }
@@ -183,7 +171,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
       transition={{ delay: 0.3 }}
       className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
     >
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
@@ -200,32 +187,24 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
           <div className="flex items-center gap-3">
             <GeoStatusPill status={geoStatus} />
             <Button
-  onClick={detectLocation}
-  disabled={geoStatus === 'loading'}
-  loading={geoStatus === 'loading'}
-  variant="primary"
-  size="sm"
-  className="rounded-xl text-xs font-bold active:scale-95 flex items-center gap-2"
->
-  {geoStatus !== 'loading' && (
-    <Navigation className="w-3.5 h-3.5" />
-  )}
-  Detect My Location
-</Button>
-              {geoStatus === 'loading'
-                ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                : <Navigation className="w-3.5 h-3.5" />
-              }
-              {geoStatus === 'loading' ? 'Detecting...' : 'Detect My Location'}
-            </button>
+              onClick={detectLocation}
+              disabled={geoStatus === 'loading'}
+              loading={geoStatus === 'loading'}
+              variant="primary"
+              size="sm"
+              className="rounded-xl text-xs font-bold active:scale-95 flex items-center gap-2"
+            >
+              <Navigation className="w-3.5 h-3.5" />
+              Detect My Location
+            </Button>
             <Button
-  onClick={() => setShowW3w(s => !s)}
-  variant="secondary"
-  size="sm"
-  className="rounded-xl text-[11px] font-bold uppercase tracking-wide bg-white/10 hover:bg-white/20 text-white"
->
-  what3words
-</Button>
+              onClick={() => setShowW3w(s => !s)}
+              variant="secondary"
+              size="sm"
+              className="rounded-xl text-[11px] font-bold uppercase tracking-wide bg-white/10 hover:bg-white/20 text-white"
+            >
+              what3words
+            </Button>
           </div>
         </div>
 
@@ -240,15 +219,15 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
                 className="flex-1 bg-white/90 text-slate-800 placeholder:text-slate-400 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
               />
               <Button
-  onClick={handleWhat3Words}
-  disabled={!isWhat3WordsAddress(w3wInput) || w3wStatus === 'loading'}
-  loading={w3wStatus === 'loading'}
-  variant="primary"
-  size="sm"
-  className="rounded-lg text-xs font-bold"
->
-  Use what3words
-</Button>
+                onClick={handleWhat3Words}
+                disabled={!isWhat3WordsAddress(w3wInput) || w3wStatus === 'loading'}
+                loading={w3wStatus === 'loading'}
+                variant="primary"
+                size="sm"
+                className="rounded-lg text-xs font-bold"
+              >
+                Use what3words
+              </Button>
             </div>
             {w3wError && (
               <p className="text-[10px] text-red-200 mt-2 font-semibold">{w3wError}</p>
@@ -261,41 +240,39 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
           </div>
         )}
 
-        {/* Medicine filter tabs */}
         {results.length > 1 && (
           <div className="mt-4 flex gap-2 flex-wrap">
             <Button
-  onClick={() => setSelectedMed('all')}
-  variant={selectedMed === 'all' ? 'primary' : 'secondary'}
-  size="sm"
-  className={`text-[10px] font-bold rounded-lg ${
-    selectedMed === 'all'
-      ? ''
-      : 'bg-white/10 text-slate-300 hover:bg-white/20'
-  }`}
->
-  All Medicines
-</Button>
+              onClick={() => setSelectedMed('all')}
+              variant={selectedMed === 'all' ? 'primary' : 'secondary'}
+              size="sm"
+              className={`text-[10px] font-bold rounded-lg ${
+                selectedMed === 'all'
+                  ? ''
+                  : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              }`}
+            >
+              All Medicines
+            </Button>
             {results.map(r => (
               <Button
-  key={r.medicine.id}
-  onClick={() => setSelectedMed(r.medicine.id)}
-  variant={selectedMed === r.medicine.id ? 'primary' : 'secondary'}
-  size="sm"
-  className={`text-[10px] font-bold rounded-lg ${
-    selectedMed === r.medicine.id
-      ? ''
-      : 'bg-white/10 text-slate-300 hover:bg-white/20'
-  }`}
->
-  {r.medicine.brandName}
-</Button>
+                key={r.medicine.id}
+                onClick={() => setSelectedMed(r.medicine.id)}
+                variant={selectedMed === r.medicine.id ? 'primary' : 'secondary'}
+                size="sm"
+                className={`text-[10px] font-bold rounded-lg ${
+                  selectedMed === r.medicine.id
+                    ? ''
+                    : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                }`}
+              >
+                {r.medicine.brandName}
+              </Button>
             ))}
           </div>
         )}
       </div>
 
-      {/* ── Location Context ─────────────────────────────────────────────────── */}
       <AnimatePresence>
         {geoStatus === 'success' && userLocation && (
           <motion.div
@@ -312,7 +289,11 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
           </motion.div>
         )}
         {geoStatus === 'error' && (
-          <motion.div key="geo-error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          <motion.div
+            key="geo-error"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="bg-red-50 border-b border-red-100 px-6 py-2.5 flex items-center gap-2"
           >
             <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
@@ -321,7 +302,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
         )}
       </AnimatePresence>
 
-      {/* ── Table ────────────────────────────────────────────────────────────── */}
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -330,12 +310,13 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
                 Pharmacy
               </th>
               {[
-                { key: 'price' as SortKey,        label: 'Price / Unit' },
-                { key: 'monthly' as SortKey,      label: 'Monthly Cost' },
+                { key: 'price' as SortKey, label: 'Price / Unit' },
+                { key: 'monthly' as SortKey, label: 'Monthly Cost' },
                 { key: 'availability' as SortKey, label: 'Availability' },
-                { key: 'distance' as SortKey,     label: 'Distance' },
+                { key: 'distance' as SortKey, label: 'Distance' },
               ].map(({ key, label }) => (
-                <th key={key}
+                <th
+                  key={key}
                   className="text-right px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors select-none"
                   onClick={() => handleSort(key)}
                 >
@@ -367,7 +348,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
                   transition={{ delay: idx * 0.05 }}
                   className={`group transition-colors ${isBest ? 'bg-emerald-50/60' : 'hover:bg-slate-50/60'}`}
                 >
-                  {/* Pharmacy name */}
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div
@@ -388,7 +368,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
                             </span>
                           )}
                         </div>
-                        {/* Mini price bar */}
                         <div className="mt-1.5 w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
                           <motion.div
                             className="h-full rounded-full"
@@ -402,7 +381,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
                     </div>
                   </td>
 
-                  {/* Price per unit */}
                   <td className="px-4 py-4 text-right">
                     <p className={`text-sm font-black ${isBest ? 'text-emerald-700' : 'text-slate-800'}`}>
                       {row.avgUnit > 0 ? formatCurrency(row.avgUnit) : '—'}
@@ -417,7 +395,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
                     )}
                   </td>
 
-                  {/* Monthly cost */}
                   <td className="px-4 py-4 text-right">
                     <p className={`text-sm font-bold ${isBest ? 'text-emerald-700' : 'text-slate-700'}`}>
                       {row.totalMonthly > 0 ? formatCurrency(row.totalMonthly) : '—'}
@@ -425,7 +402,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
                     <p className="text-[9px] text-slate-400 font-medium mt-0.5">per month</p>
                   </td>
 
-                  {/* Availability */}
                   <td className="px-4 py-4 text-right">
                     <span className={`inline-flex items-center gap-1 text-[9px] font-black px-2 py-1 rounded-lg ${
                       row.availability === 'In Stock'
@@ -441,7 +417,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
                     </span>
                   </td>
 
-                  {/* Distance */}
                   <td className="px-4 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <MapPin className={`w-3 h-3 ${isNearest ? 'text-blue-500' : 'text-slate-300'}`} />
@@ -454,7 +429,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
                     )}
                   </td>
 
-                  {/* Annual */}
                   <td className="px-5 py-4 text-right">
                     <p className={`text-sm font-bold ${isBest ? 'text-emerald-700' : 'text-slate-700'}`}>
                       {row.totalAnnual > 0 ? formatCurrency(row.totalAnnual) : '—'}
@@ -468,7 +442,6 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
         </table>
       </div>
 
-      {/* ── Footer ──────────────────────────────────────────────────────────── */}
       <div className="border-t border-slate-100 bg-slate-50 px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <Zap className="w-3.5 h-3.5 text-amber-500" />
