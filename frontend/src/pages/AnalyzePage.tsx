@@ -335,7 +335,7 @@ export default function AnalyzePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
       <Navbar />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-10">
@@ -348,10 +348,10 @@ export default function AnalyzePage() {
               animate={{ opacity: 1, y: 0 }}
               className="mb-10 text-center"
             >
-              <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-tight mb-3">
+              <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-tight mb-3">
                 Prescription Intelligence
               </h1>
-              <p className="text-slate-500 font-medium">
+              <p className="text-slate-500 dark:text-slate-400 font-medium">
                 Upload a photo or type medicines — extract, normalise &amp; find the best price instantly.
               </p>
             </motion.div>
