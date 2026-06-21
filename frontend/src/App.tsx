@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { DarkModeProvider } from './context/DarkModeContext';
 import LandingPage from './pages/LandingPage';
 import AnalyzePage from './pages/AnalyzePage';
 import PriceHistoryPage from './pages/PriceHistoryPage';
@@ -8,6 +9,7 @@ import TakeTestPage from './pages/TakeTestPage';
 
 export default function App() {
   return (
+    <DarkModeProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
@@ -18,5 +20,6 @@ export default function App() {
         <Route path="/pharmacy-network" element={<PharmacyNetworkPage />} />
       </Routes>
     </BrowserRouter>
+    </DarkModeProvider>
   );
 }

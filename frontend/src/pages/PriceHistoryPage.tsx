@@ -23,13 +23,13 @@ export default function PriceHistoryPage() {
   ).slice(0, 8);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
       <Navbar />
       
       <main className="max-w-[1024px] mx-auto px-6 pt-12">
         <Link 
           to="/analyze" 
-          className="inline-flex items-center text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors group mb-8 bg-white border border-slate-200 shadow-sm px-4 py-2 rounded-full"
+          className="inline-flex items-center text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors group mb-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm px-4 py-2 rounded-full"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
           BACK TO DASHBOARD
@@ -38,11 +38,11 @@ export default function PriceHistoryPage() {
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-tight mb-2 flex items-center gap-3">
+              <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-tight mb-2 flex items-center gap-3">
                 <Activity className="w-8 h-8 text-blue-600" />
                 Market Price History
               </h1>
-              <p className="text-slate-500 font-medium">
+              <p className="text-slate-500 dark:text-slate-400 font-medium">
                 Track 12-month historical pricing trends for brand and generic alternatives.
               </p>
             </div>
@@ -54,7 +54,7 @@ export default function PriceHistoryPage() {
                 placeholder="Search medicines..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64 pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                className="w-64 pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white shadow-sm focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
               />
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function PriceHistoryPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col"
+                    className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col"
                   >
                     <div className="flex items-start justify-between mb-6">
                       <div className="flex items-center gap-3">
@@ -93,7 +93,7 @@ export default function PriceHistoryPage() {
                           <Pill className="w-5 h-5" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-black text-slate-800 tracking-tight leading-none">{med.brandName}</h3>
+                          <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight leading-none">{med.brandName}</h3>
                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">{med.saltComposition}</p>
                         </div>
                       </div>
@@ -128,7 +128,7 @@ export default function PriceHistoryPage() {
                       })}
                     </div>
                     
-                    <div className="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-400">
+                    <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs font-semibold text-slate-400">
                       <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> May 2025</span>
                       <span>Apr 2026</span>
                     </div>
@@ -137,7 +137,7 @@ export default function PriceHistoryPage() {
               })}
 
               {filteredMeds.length === 0 && (
-                <div className="col-span-full py-20 text-center bg-white border border-slate-200 rounded-2xl shadow-sm">
+                <div className="col-span-full py-20 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm">
                   <Search className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                   <p className="text-slate-500 font-bold">No medicines found matching your search.</p>
                 </div>
