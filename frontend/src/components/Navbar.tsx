@@ -7,18 +7,21 @@ import {
   Network,
   Menu,
   X,
+  HeartPulse,
   Moon,
-  Sun
+  Sun,
 } from 'lucide-react';
 import { useDarkMode } from '../context/DarkModeContext';
+import { medicines } from '../lib/mockData';
 import Button from './ui/Button';
 
 const NAV_LINKS = [
-  { to: '/',                 label: 'Home',                   icon: Home,      exact: true  },
-  { to: '/analyze',          label: 'Intelligence Dashboard',  icon: Activity,  exact: false },
-  { to: '/price-history',    label: 'Price History',           icon: Activity,  exact: true  },
-  { to: '/savings-reports',  label: 'Savings Reports',         icon: BarChart2, exact: true  },
-  { to: '/pharmacy-network', label: 'Pharmacy Network',        icon: Network,   exact: true  },
+  { to: '/',                 label: 'Home',                    icon: Home,      exact: true  },
+  { to: '/analyze',          label: 'Intelligence Dashboard', icon: Activity,  exact: false },
+  { to: '/test',             label: 'Symptom Test',           icon: HeartPulse, exact: true  },
+  { to: '/price-history',    label: 'Price History',          icon: Activity,  exact: true  },
+  { to: '/savings-reports',  label: 'Savings Reports',        icon: BarChart2, exact: true  },
+  { to: '/pharmacy-network', label: 'Pharmacy Network',       icon: Network,   exact: true  },
 ] as const;
 
 export default function Navbar() {

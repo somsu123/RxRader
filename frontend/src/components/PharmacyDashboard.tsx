@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+// import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Navigation, CheckCircle2, AlertCircle, Clock,
   TrendingDown, Zap, RefreshCw, ChevronUp, ChevronDown, Star
@@ -162,13 +163,21 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
       case 'price':        va = a.avgUnit;        vb = b.avgUnit; break;
       case 'monthly':      va = a.totalMonthly;   vb = b.totalMonthly; break;
       case 'availability': va = a.availability === 'In Stock' ? 0 : 1; vb = b.availability === 'In Stock' ? 0 : 1; break;
-      case 'distance':     va = a.distanceKm ?? 9999; vb = b.distanceKm ?? 9999; break;
+      case 'distance':va = a.distanceKm ?? Number.MAX_SAFE_INTEGER;vb = b.distanceKm ?? Number.MAX_SAFE_INTEGER;
+            break;
       default: va = a.avgUnit; vb = b.avgUnit;
     }
     return sortDir === 'asc' ? va - vb : vb - va;
   });
 
-  const bestMonthly = Math.min(...rows.map(r => r.totalMonthly).filter(v => v > 0));
+  // const bestMonthly = Math.min(...rows.map(r => r.totalMonthly).filter(v => v > 0));
+  const monthlyValues = rows
+  .map(r => r.totalMonthly)
+  .filter(v => v > 0);
+
+   const bestMonthly = monthlyValues.length
+      ? Math.min(...monthlyValues)
+        : 0;
   const maxMonthly  = Math.max(...rows.map(r => r.totalMonthly));
 
   function SortIcon({ col }: { col: SortKey }) {
@@ -200,24 +209,19 @@ export default function PharmacyDashboard({ results }: PharmacyDashboardProps) {
           <div className="flex items-center gap-3">
             <GeoStatusPill status={geoStatus} />
             <Button
-  onClick={detectLocation}
-  disabled={geoStatus === 'loading'}
-  loading={geoStatus === 'loading'}
-  variant="primary"
-  size="sm"
-  className="rounded-xl text-xs font-bold active:scale-95 flex items-center gap-2"
->
-  {geoStatus !== 'loading' && (
-    <Navigation className="w-3.5 h-3.5" />
-  )}
-  Detect My Location
-</Button>
+              onClick={detectLocation}
+              disabled={geoStatus === 'loading'}
+              loading={geoStatus === 'loading'}
+              variant="primary"
+              size="sm"
+              className="rounded-xl text-xs font-bold active:scale-95 flex items-center gap-2"
+            >
               {geoStatus === 'loading'
                 ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 : <Navigation className="w-3.5 h-3.5" />
               }
               {geoStatus === 'loading' ? 'Detecting...' : 'Detect My Location'}
-            </button>
+            </Button>
             <Button
   onClick={() => setShowW3w(s => !s)}
   variant="secondary"

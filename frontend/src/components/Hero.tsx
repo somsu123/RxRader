@@ -36,13 +36,29 @@ export default function Hero() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/analyze" className="inline-block">
-              <Button
-                variant="primary"
-                size="lg"
-                className="group rounded-2xl shadow-xl shadow-blue-200 flex items-center active:scale-95"
-              >
-                Analyze Prescription
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              
+                    <Link to="/analyze" className="inline-block">
+                                    <Button
+                                      variant="primary"
+                                      size="lg"
+                                      className="group rounded-2xl shadow-xl shadow-blue-200 flex items-center active:scale-95"
+                                    >
+                                      Analyze Prescription
+                                      <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                    </Link>
+
+                                  <Link to="/test" className="inline-block">
+                                    <Button
+                                      variant="secondary"
+                                       size="lg"
+                                       className="rounded-2xl text-gray-700 flex items-center active:scale-95"
+                                      >
+                                       Take Test
+                                      <HeartPulse className="ml-2 w-5 h-5" />
+                                      </Button>
+                                      </Link>
+                                      >
               </Button>
             </Link>
             <Button
